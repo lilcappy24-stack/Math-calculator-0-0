@@ -103,7 +103,7 @@ const GameView = ({ favorites, onToggleFavorite }) => {
     return html`
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
         <h2 className="text-3xl font-bold mb-4">Game Not Found</h2>
-        <button onClick=${() => navigate('/')} className="px-6 py-2 bg-cyan-600 rounded-lg">Go Home</button>
+        <button onClick=${() => navigate('/')} className="px-6 py-2 bg-cyan-600 rounded-lg text-white font-bold hover:bg-cyan-500 transition-colors">Go Home</button>
       </div>
     `;
   }
@@ -226,16 +226,26 @@ const HomePage = ({ searchQuery, activeCategory, setActiveCategory, favorites, o
         </div>
       `}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        ${filteredGames.map(game => html`
-          <${GameCard} 
-            key=${game.id} 
-            game=${game} 
-            isFavorite=${favorites.includes(game.id)}
-            onToggleFavorite=${onToggleFavorite}
-          />
-        `)}
-      </div>
+      ${filteredGames.length > 0 ? html`
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          ${filteredGames.map(game => html`
+            <${GameCard} 
+              key=${game.id} 
+              game=${game} 
+              isFavorite=${favorites.includes(game.id)}
+              onToggleFavorite=${onToggleFavorite}
+            />
+          `)}
+        </div>
+      ` : html`
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-600">
+            <${IconSearch} />
+          </div>
+          <h3 className="text-2xl font-bold text-slate-300">No games found</h3>
+          <p className="text-slate-400 mt-2">Try adding some games to the database to get started.</p>
+        </div>
+      `}
     </div>
   `;
 };
@@ -249,7 +259,14 @@ const Footer = () => html`
 export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
-  const [favorites, setFavorites] = useState(() => JSON.parse(localStorage.getItem('novaarcade_favorites') || '[]'));
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const saved = localStorage.getItem('novaarcade_favorites');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
 
   useEffect(() => localStorage.setItem('novaarcade_favorites', JSON.stringify(favorites)), [favorites]);
 
@@ -262,7 +279,7 @@ export default function App() {
         <main className="flex-grow">
           <${Routes}>
             <${Route} path="/" element=${html`<${HomePage} searchQuery=${searchQuery} activeCategory=${activeCategory} setActiveCategory=${setActiveCategory} favorites=${favorites} onToggleFavorite=${toggleFavorite} />`} />
-            <${Route} path="/favorites" element=${html`<${HomePage} searchQuery=${searchQuery} activeCategory="All" favorites=${favorites} onToggleFavorite=${toggleFavorite} showOnlyFavorites=${true} />`} />
+            <${Route} path="/favorites" element=${html`<${HomePage} searchQuery=${searchQuery} activeCategory="All" setActiveCategory=${setActiveCategory} favorites=${favorites} onToggleFavorite=${toggleFavorite} showOnlyFavorites=${true} />`} />
             <${Route} path="/game/:id" element=${html`<${GameView} favorites=${favorites} onToggleFavorite=${toggleFavorite} />`} />
           <//>
         </main>
